@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SensAA AAS 3D – Gangguan Ca pada AAS Nyala</title>
+<style>
+:root{--bg:#0e1a22;--ink:#16252e;--paper:#f2f5f6;--card:#fff;--line:#d3dde1;--acc:#e8751a;--vio:#7a4dff;--ok:#1b8a5a;--bad:#c93b2b;--mut:#5b6e78}
+@media (prefers-color-scheme:dark){:root{--paper:#121d24;--card:#18262f;--line:#2a3b46;--ink:#e6eef1;--mut:#97aab4}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.55 "Segoe UI",system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+header{background:var(--bg);color:#e8f1f4;padding:14px 18px 0}
+header h1{margin:0;font:600 20px/1.2 Georgia,serif}
+header p{margin:4px 0 10px;color:#9fb4be;font-size:13px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav button{background:none;border:0;color:#9fb4be;padding:9px 14px;font:inherit;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-color:var(--acc)}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.tab{display:none;padding:16px;max-width:1280px;margin:auto}.tab.on{display:block}
+#t1{max-width:none;padding:0}
+.sim{display:grid;grid-template-columns:1fr 360px;min-height:calc(100vh - 100px)}
+@media(max-width:900px){.sim{grid-template-columns:1fr}}
+#view{position:relative;background:radial-gradient(circle at 50% 30%,#1d3340,#0b151b);min-height:480px;touch-action:none}
+#view canvas{display:block;width:100%;height:100%}
+#hud{position:absolute;left:12px;bottom:12px;background:#0b151bcc;color:#e8f1f4;padding:8px 12px;border-radius:6px;font-size:13px;min-width:200px}
+#bar{height:6px;background:#2a3b46;margin-top:4px;border-radius:3px;overflow:hidden}#bar i{display:block;height:100%;width:0;background:var(--vio)}
+#hint{position:absolute;right:12px;top:10px;color:#9fb4be;font-size:12px}
+aside{background:var(--card);border-left:1px solid var(--line);padding:14px;overflow:auto;max-height:calc(100vh - 100px)}
+@media(max-width:900px){aside{max-height:none;border-left:0}}
+aside h3,.tab h2{font:600 17px Georgia,serif;margin:0 0 8px}
+.steps{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.steps button{text-align:left;background:var(--paper);border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:5px;cursor:pointer;font:inherit;font-size:13.5px}
+.steps button.on{border-color:var(--acc);background:#e8751a1f}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:5px;padding:7px 12px;cursor:pointer;font:inherit}
+.btn.alt{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.chips button{font-size:12.5px;padding:3px 8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;cursor:pointer}
+.chips button.on{background:var(--ink);color:var(--paper)}
+#info{background:var(--paper);border-left:3px solid var(--vio);padding:8px 10px;font-size:13.5px;margin-top:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right}th:first-child,td:first-child{text-align:left}
+input,select{font:inherit;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:3px 5px;width:78px}
+td input.w{width:100%}select{width:auto}
+.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}
+.eq{font-family:Cambria,Georgia,serif;background:var(--paper);padding:6px 10px;border-radius:5px;margin:6px 0;overflow-x:auto}
+.tab p,.tab li{max-width:78ch}sup a{color:var(--vio);text-decoration:none}
+canvas#ch{width:100%;height:240px}
+.note{font-size:12.5px;color:var(--mut)}
+ol.ref li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+<h1>SensAA AAS – Simulasi 3D & Analisis Gangguan Ca</h1>
+<p>Spektrofotometer Serapan Atom nyala GBC SensAA Dual · Penetapan Ca pada 422,7 nm, udara–asetilen</p>
+<nav id="nav"></nav>
+</header>
+
+<section class="tab on" id="t1">
+<div class="sim">
+<div id="view"><div id="hint">Seret: putar · Roda/cubit: zoom · Klik komponen</div>
+<div id="hud">Absorbansi: <b id="aV">0.000</b> &nbsp; %T: <b id="tV">100.0</b><div id="bar"><i id="aB"></i></div></div></div>
+<aside>
+<h3>Simulasi cara kerja</h3>
+<div class="row"><button class="btn" id="prev">‹ Sebelumnya</button><button class="btn" id="play">▶ Putar otomatis</button><button class="btn" id="next">Berikutnya ›</button></div>
+<div class="steps" id="steps"></div>
+<div id="sdesc" class="note"></div>
+<h3 style="margin-top:14px">Komponen instrumen</h3>
+<div class="chips" id="chips"></div>
+<div id="info">Klik bagian instrumen di tampilan 3D atau pilih dari daftar.</div>
+<p class="note">Model 3D bersifat skematik (tidak berskala) berdasarkan foto SensAA di laboratorium.</p>
+</aside>
+</div>
+</section>
+
+<section class="tab" id="t2">
+<div class="grid">
+<div class="card"><h2>Prinsip AAS</h2>
+<p>Atom bebas pada keadaan dasar menyerap radiasi dengan panjang gelombang resonansi yang sama dengan energi transisi elektronnya. Untuk Ca, lampu katoda berongga (HCL) Ca memancarkan garis 422,7 nm (transisi 4s² ¹S₀ → 4s4p ¹P₁). Larutan sampel dikabutkan, kabut masuk ke nyala, mengalami desolvasi → penguapan → atomisasi, lalu atom Ca⁰ menyerap sebagian berkas lampu.<sup><a href="#r1">[1]</a><a href="#r2">[2]</a></sup></p>
+<div class="eq">A = log(P₀/P) = –log T = ε · b · C</div>
+<p>Hukum Lambert–Beer: absorbansi sebanding dengan konsentrasi atom di jalur optik, sehingga kurva kalibrasi A terhadap C linear pada rentang kerja.<sup><a href="#r1">[1]</a></sup> Urutan komponen: HCL → nyala (atomizer) → monokromator → detektor (PMT) → pengolah data.</p>
+<p><b>Konversi cepat:</b> %T <input id="cT" type="number" value="50" step="any"> → A = <b id="cA"></b></p></div>
+
+<div class="card"><h2>Gangguan pada analisis Ca</h2>
+<p><b>Gangguan kimia (utama).</b> Fosfat dan sulfat (juga Al, Si) bereaksi dengan Ca membentuk senyawa termal stabil yang sukar diatomisasi di nyala udara–asetilen (± 2300 °C), sehingga atom Ca bebas berkurang dan absorbansi turun.<sup><a href="#r2">[2]</a><a href="#r3">[3]</a></sup></p>
+<div class="eq">3Ca²⁺ + 2PO₄³⁻ → Ca₃(PO₄)₂ (sukar atomisasi)<br>Ca²⁺ + SO₄²⁻ → CaSO₄</div>
+<p><b>Cara mengatasi:</b></p>
+<ul>
+<li><b>La³⁺ (releasing agent)</b>, biasanya sekitar 0,1–1 % b/v: La mengikat fosfat membentuk LaPO₄ yang lebih stabil sehingga Ca terbebas.<sup><a href="#r3">[3]</a><a href="#r4">[4]</a></sup></li>
+<li><b>EDTA (protecting agent)</b>: membentuk kompleks Ca–EDTA yang stabil di larutan tetapi terurai di nyala, melindungi Ca dari anion pengganggu.<sup><a href="#r2">[2]</a></sup></li>
+<li>Nyala N₂O–asetilen (± 2700 °C) menghilangkan gangguan fosfat, namun ionisasi Ca meningkat sehingga perlu ionization suppressor (K/Na/Cs).<sup><a href="#r2">[2]</a></sup></li></ul>
+<div class="eq">La³⁺ + PO₄³⁻ → LaPO₄ ; Ca²⁺ bebas → Ca⁰ (nyala)</div>
+<p class="note">Kriteria penerimaan validasi pada aplikasi ini: %recovery 85–115 % dan %RSD &lt; 5 %.<sup><a href="#r5">[5]</a><a href="#r6">[6]</a></sup></p></div>
+
+<div class="card"><h2>Parameter operasi (acuan umum)</h2>
+<table><tr><td>Lampu</td><td>HCL Ca (HDA0400)</td></tr><tr><td>Panjang gelombang</td><td>422,7 nm</td></tr><tr><td>Nyala</td><td>Udara–asetilen (oksidasi/lean)</td></tr><tr><td>Rentang kerja khas</td><td>± 1–5 mg/L</td></tr><tr><td>Pelarut deret standar</td><td>HNO₃/HCl encer + La 1 %</td></tr></table>
+<p class="note">Nilai pasti (arus lampu, slit, tinggi burner, laju alir gas) mengikuti manual SensAA dan optimasi di laboratorium.<sup><a href="#r7">[7]</a></sup></p></div>
+</div>
+</section>
+
+<section class="tab" id="t3">
+<div class="grid">
+<div class="card"><h2>1. Kurva kalibrasi deret standar Ca²⁺</h2>
+<table id="cal"><thead><tr><th>C (mg/L)</th><th>Absorbansi</th></tr></thead><tbody></tbody></table>
+<div class="row"><button class="btn alt" id="addR">+ Titik</button><button class="btn alt" id="delR">– Titik</button></div>
+<canvas id="ch"></canvas>
+<table id="calRes"></table>
+<p class="note">Data awal berupa contoh. Ganti dengan hasil pengukuran Anda. LOD = 3·Sy/x ÷ slope; LOQ = 10·Sy/x ÷ slope.</p></div>
+
+<div class="card"><h2>2. Uji gangguan (3 ulangan) & kriteria</h2>
+<p>Konsentrasi nominal Ca: <input id="nom" type="number" value="3" step="any"> mg/L</p>
+<div style="overflow-x:auto"><table id="int"><thead><tr><th>Larutan</th><th>A₁</th><th>A₂</th><th>A₃</th><th>C rata² (mg/L)</th><th>%Recovery</th><th>%RSD</th><th>Δ A vs Ca</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+<p class="note">%Recovery = (C terukur ÷ C nominal)×100, syarat 85–115 %. %RSD = (SD ÷ rata-rata)×100, syarat &lt; 5 %. Δ A = penurunan absorbansi terhadap Ca tanpa pengganggu. Konsentrasi dihitung dari persamaan y = mx + b pada kurva di sebelah.</p></div>
+
+<div class="card"><h2>3. Pembuatan larutan</h2>
+<div class="row"><select id="rg"></select> target <input id="rt" type="number" value="1000" step="any"> <span id="ru"></span> volume <input id="rv" type="number" value="100" step="any"> mL</div>
+<div class="eq" id="rres"></div>
+<p class="note">Stok 1000 mg/L Ca dari CaCO₃ dilarutkan dengan sedikit HCl lalu ditepatkan. Faktor gravimetri: Ca/CaCO₃ = 40,078/100,087; SO₄/Na₂SO₄ = 96,06/142,04; PO₄/KH₂PO₄ = 94,97/136,09; La/La₂O₃ = 2×138,905/325,81.</p>
+<h2 style="margin-top:12px">Pengenceran (C₁V₁ = C₂V₂)</h2>
+<div class="row">C₁ <input id="c1" type="number" value="1000"> C₂ <input id="c2" type="number" value="5"> V₂ <input id="v2" type="number" value="50"> mL</div>
+<div class="eq" id="dres"></div>
+<p class="note">Deret standar 1–5 mg/L dari stok perantara 100 mg/L; tambahkan La (mis. 1 % akhir) ke tiap labu.</p></div>
+</div>
+</section>
+
+<section class="tab" id="t4">
+<div class="card"><h2>Sumber referensi</h2>
+<ol class="ref">
+<li id="r1">Skoog, D.A., Holler, F.J., Crouch, S.R. (2018). <i>Principles of Instrumental Analysis</i>, 7th ed. Cengage Learning. (Bab Atomic Absorption Spectrometry: prinsip, instrumen, gangguan.)</li>
+<li id="r2">Welz, B., Sperling, M. (1999). <i>Atomic Absorption Spectrometry</i>, 3rd ed. Wiley-VCH, Weinheim. (Gangguan kimia dan pengionan, releasing/protecting agent.)</li>
+<li id="r3">Robinson, J.W., Skelly Frame, E.M., Frame II, G.M. (2014). <i>Undergraduate Instrumental Analysis</i>, 7th ed. CRC Press. (Gangguan Ca oleh fosfat dan penggunaan La.)</li>
+<li id="r4">APHA, AWWA, WEF. <i>Standard Methods for the Examination of Water and Wastewater</i>, Method 3111 B: Direct Air-Acetylene Flame Method, dan 3500-Ca (kalsium).</li>
+<li id="r5">Harmita (2004). Petunjuk Pelaksanaan Validasi Metode dan Cara Perhitungannya. <i>Majalah Ilmu Kefarmasian</i>, 1(3), 117–135. (Akurasi/recovery, presisi/RSD, LOD, LOQ.)</li>
+<li id="r6">AOAC International (2016). <i>Guidelines for Standard Method Performance Requirements</i> (Appendix F). (Rentang recovery dan RSD yang dapat diterima.)</li>
+<li id="r7">GBC Scientific Equipment. <i>SensAA Dual Atomic Absorption Spectrometer – Operation Manual</i>.</li>
+<li id="r8">Gandjar, I.G., Rohman, A. (2007). <i>Kimia Farmasi Analisis</i>. Pustaka Pelajar, Yogyakarta.</li>
+</ol>
+<p class="note">Cek ulang edisi, halaman, dan versi metode yang berlaku sebelum dikutip dalam laporan resmi.</p></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const fx=(v,d=3)=>isFinite(v)?v.toFixed(d):'–';
+/* ---------- tabs ---------- */
+['Simulasi 3D','Prinsip & Gangguan Ca','Perhitungan','Referensi'].forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{$$('.tab').forEach((t,j)=>t.classList.toggle('on',i==j));$$('#nav button').forEach((x,j)=>x.classList.toggle('on',i==j));if(i==0)resize();if(i==2)drawChart()};if(!i)b.className='on';$('#nav').appendChild(b)});
+
+/* ---------- 3D ---------- */
+const view=$('#view'),scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(42,1,.1,100);
+const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));view.appendChild(ren.domElement);
+scene.add(new THREE.AmbientLight(0xffffff,.75));const dl=new THREE.DirectionalLight(0xffffff,.7);dl.position.set(4,8,6);scene.add(dl);
+const lampLight=new THREE.PointLight(0x9a6bff,0,6);lampLight.position.set(-3,2.3,0);scene.add(lampLight);
+const pick=[],comps={};
+const M=(c,o={})=>new THREE.MeshLambertMaterial(Object.assign({color:c},o));
+function reg(id,name,desc){comps[id]={name,desc,mats:[]};return id}
+function add(id,mesh,x,y,z){mesh.position.set(x,y,z);mesh.userData.id=id;scene.add(mesh);pick.push(mesh);comps[id].mats.push(mesh.material);return mesh}
+const bx=(id,w,h,d,c,x,y,z,o)=>add(id,new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,o)),x,y,z);
+const cy=(id,r,h,c,x,y,z,o,rot)=>{const m=add(id,new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,24),M(c,o)),x,y,z);if(rot)m.rotation.z=Math.PI/2;return m};
+const tube=(id,pts,c,r=.035)=>{const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p))),24,r,8),M(c));m.userData.id=id;scene.add(m);pick.push(m);comps[id].mats.push(m.material)};
+
+reg('lamp','Lampu katoda berongga (HCL) Ca','Sumber radiasi. Katoda berisi Ca (kode HDA0400) memancarkan garis resonansi Ca 422,7 nm. Perlu pemanasan (warm-up) ± 15–30 menit agar intensitas stabil; atur arus sesuai rekomendasi lampu.');
+reg('mono','Monokromator','Memilih garis 422,7 nm dan memisahkannya dari emisi nyala serta garis lain melalui celah (slit) dan kisi difraksi.');
+reg('pmt','Detektor (PMT)','Photomultiplier mengubah intensitas cahaya menjadi sinyal listrik. Perangkat lunak menghitung A = –log(P/P₀) terhadap blanko.');
+reg('nebu','Nebulizer & kapiler sampel','Menyedot larutan melalui kapiler (efek Venturi oleh aliran udara) dan mengubahnya menjadi kabut halus.');
+reg('chamber','Ruang pengabut (spray chamber)','Memilih tetesan halus (± 5–10 % sampel) menuju burner; tetesan besar mengalir ke drain. Gas bahan bakar dan oksidan bercampur di sini.');
+reg('burner','Kepala burner (AIR-ACET)','Burner slot untuk nyala udara–asetilen; slot memanjang searah berkas cahaya untuk memperpanjang jalur optik.');
+reg('flame','Nyala udara–asetilen','± 2300 °C. Di sini terjadi desolvasi, penguapan, dan atomisasi. Senyawa fosfat/sulfat Ca yang stabil tidak seluruhnya teratomisasi sehingga serapan turun.');
+reg('shield','Pelindung nyala & hood','Pelindung baja tahan karat menjaga nyala stabil; hood menyedot gas buang ke saluran duct (aluminium fleksibel) ke luar ruangan.');
+reg('gas','Panel gas (Support/Fuel)','Knob SUPPORT mengatur udara (oksidan), FUEL mengatur asetilen. Flowmeter dan indikator: tekanan udara, tekanan asetilen, nyala, burner, liquid trap. Tombol hijau = daya.');
+reg('screen','Layar sentuh & unit kontrol','Antarmuka instrumen untuk memilih elemen, mengatur parameter, kalibrasi, dan melihat sinyal.');
+reg('drain','Drain & liquid trap','Selang pembuangan larutan sisa dari ruang pengabut; liquid trap harus berisi air agar tidak ada kebocoran gas (risiko keselamatan).');
+reg('pc','PC & UPS','Komputer menjalankan perangkat lunak SensAA, UPS menjaga catu daya stabil saat analisis.');
+reg('sample','Larutan sampel/standar','Larutan Ca²⁺ (standar, sampel, atau dengan pengganggu/La/EDTA) diaspirasi ke nebulizer.');
+// table/floor
+const fl=new THREE.Mesh(new THREE.BoxGeometry(18,.2,6),M(0xdfe7ea));fl.position.set(-1,-.1,.3);scene.add(fl);
+const gr=new THREE.GridHelper(18,36,0xb8c6cc,0xc9d5da);gr.position.set(-1,.01,.3);gr.scale.z=.33;scene.add(gr);
+// left unit
+bx('screen',3.2,1.6,2.2,0xeceeec,-2.6,.8,0);
+bx('screen',1.9,1.05,.05,0x15191c,-2.7,.95,1.12);
+bx('lamp',.9,.5,.9,0xcdd3d6,-3.2,1.85,0);
+const lamp=cy('lamp',.25,1.0,0xb9bfc2,-3.2,2.3,0,null,true);lamp.position.set(-3.2,2.3,0);
+const lampGlass=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.7,20),M(0xcfe6f2,{transparent:true,opacity:.45,emissive:0x000000}));lampGlass.rotation.z=Math.PI/2;lampGlass.position.set(-2.55,2.3,0);lampGlass.userData.id='lamp';scene.add(lampGlass);pick.push(lampGlass);
+bx('lamp',.12,.55,.55,0xd9382b,-3.5,2.3,0).material.color.set(0xd9382b);
+// center chassis (transparent so internals show)
+bx('chamber',1.4,1.9,2.0,0x2a5f86,0,.95,0,{transparent:true,opacity:.28});
+cy('chamber',.3,1.1,0xb8d8ea,0,1.15,.1,{transparent:true,opacity:.7});
+cy('nebu',.11,.45,0x8d8f88,0,.55,.45);
+const cone=new THREE.Mesh(new THREE.ConeGeometry(.4,.45,24,1,true),M(0x9aa3a8));cone.position.set(0,1.75,0);cone.rotation.x=Math.PI;cone.userData.id='burner';scene.add(cone);pick.push(cone);comps.burner.mats.push(cone.material);
+bx('burner',1.7,.14,.14,0x8a9094,0,1.95,0);
+// shield (U shape)
+bx('shield',1.6,.9,.04,0xb7c0c4,0,2.45,-.55);bx('shield',.04,.9,1.1,0xb7c0c4,-.8,2.45,0,{transparent:true,opacity:.75});bx('shield',.04,.9,1.1,0xb7c0c4,.8,2.45,0,{transparent:true,opacity:.75});
+const hood=new THREE.Mesh(new THREE.CylinderGeometry(.45,1.4,.9,4,1,true),M(0xaab3b8,{side:THREE.DoubleSide}));hood.rotation.y=Math.PI/4;hood.position.set(0,3.55,0);hood.userData.id='shield';scene.add(hood);pick.push(hood);comps.shield.mats.push(hood.material);
+cy('shield',.25,1.6,0xc3ccd0,0,4.5,0);bx('shield',.25,.25,2.8,0xc3ccd0,0,5.3,-1.2).scale.set(1,1,1);
+// right unit
+bx('gas',2.2,1.6,2.2,0xeceeec,2.3,.8,0);
+bx('gas',1.6,.9,.04,0xf6f7f6,2.3,.85,1.12);
+bx('gas',.16,.85,.06,0x6fa8d9,2.3,.85,1.15);
+cy('gas',.17,.12,0x4a5a68,1.75,1.25,1.2,null).rotation.x=Math.PI/2;cy('gas',.17,.12,0x4a5a68,2.85,1.25,1.2,null).rotation.x=Math.PI/2;
+cy('gas',.1,.08,0x2da44e,2.0,.12,1.15,null).rotation.x=Math.PI/2;
+bx('mono',1.0,.8,.8,0xd3d8da,1.9,2.0,0);
+bx('pmt',.5,.5,.5,0x2a2f33,3.0,2.0,0);
+// tubes
+tube('nebu',[[1.2,.9,.5],[.7,.4,.6],[.15,.5,.45]],0xe0372c,.04);tube('nebu',[[1.2,.8,.6],[.6,.3,.7],[.12,.55,.43]],0x2f69e0,.04);
+tube('chamber',[[.2,.9,.1],[.2,1.5,.1],[.05,1.75,0]],0xe0372c,.03);tube('chamber',[[.3,.8,-.1],[.3,1.4,-.1],[-.1,1.78,0]],0x2f69e0,.03);
+tube('sample',[[0,.4,.4],[0,.1,1.0],[.25,.9,1.7],[.25,.2,1.7]],0xe9f1f4,.025);
+const beaker=cy('sample',.32,.75,0xcfe6f2,.25,.38,1.7,{transparent:true,opacity:.35});
+const liq=cy('sample',.29,.4,0xbfd9e8,.25,.22,1.7,{transparent:true,opacity:.8});
+tube('drain',[[-.2,.7,.1],[-.5,.15,1.0],[-.9,.4,1.4]],0xa5adb1,.045);cy('drain',.2,.5,0xbfc8cc,-.9,.25,1.5,{transparent:true,opacity:.6});
+// PC & UPS
+bx('pc',1.0,.9,.9,0x222628,-5.2,.45,0);bx('pc',.7,1.5,1.2,0x8f1c22,-6.3,.75,0);
+// flame
+const flame=new THREE.Mesh(new THREE.ConeGeometry(.38,.9,24),new THREE.MeshBasicMaterial({color:0xff8a1f,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false}));flame.scale.set(2.2,1,.45);flame.position.set(0,2.45,0);flame.userData.id='flame';flame.visible=false;scene.add(flame);pick.push(flame);comps.flame.mats.push(flame.material);
+const fin=new THREE.Mesh(new THREE.ConeGeometry(.2,.45,16),new THREE.MeshBasicMaterial({color:0x46b9ff,transparent:true,opacity:.75,blending:THREE.AdditiveBlending,depthWrite:false}));fin.scale.set(2.2,1,.45);fin.position.set(0,2.2,0);flame.add(fin);fin.position.set(0,-.2,0);
+// beam
+const bm=()=>new THREE.MeshBasicMaterial({color:0x8a5cff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+const seg=(x0,x1)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,x1-x0,10),bm());m.rotation.z=Math.PI/2;m.position.set((x0+x1)/2,2.3,0);scene.add(m);return m};
+const b1=seg(-2.5,-.8),b2=seg(-.8,.8),b3=seg(.8,1.4);
+// particles
+const N=70,pg=new THREE.BufferGeometry(),pp=new Float32Array(N*3),pc=new Float32Array(N*3);
+pg.setAttribute('position',new THREE.BufferAttribute(pp,3));pg.setAttribute('color',new THREE.BufferAttribute(pc,3));
+const pts=new THREE.Points(pg,new THREE.PointsMaterial({size:.1,vertexColors:true,transparent:true,opacity:.95,depthWrite:false}));pts.frustumCulled=false;scene.add(pts);
+const P=[...Array(N)].map((_,i)=>({t:Math.random(),atom:true,j:Math.random()*6.28,i}));
+const col=(h)=>new THREE.Color(h);
+
+/* camera orbit */
+let th=.55,ph=1.22,rad=12.5;const tgt=new THREE.Vector3(-1,2,0);
+function setCam(){cam.position.set(tgt.x+rad*Math.sin(ph)*Math.sin(th),tgt.y+rad*Math.cos(ph),tgt.z+rad*Math.sin(ph)*Math.cos(th));cam.lookAt(tgt)}
+function resize(){const w=view.clientWidth,h=view.clientHeight||480;ren.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix();setCam()}
+addEventListener('resize',resize);
+const ptr=new Map();let moved=0,pd=0;
+view.addEventListener('pointerdown',e=>{ptr.set(e.pointerId,[e.clientX,e.clientY]);moved=0;view.setPointerCapture(e.pointerId);if(ptr.size==2){const[a,b]=[...ptr.values()];pd=Math.hypot(a[0]-b[0],a[1]-b[1])}});
+view.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;const o=ptr.get(e.pointerId);if(ptr.size==1){th-=(e.clientX-o[0])*.007;ph=Math.min(2.2,Math.max(.3,ph-(e.clientY-o[1])*.007));moved+=Math.abs(e.clientX-o[0])+Math.abs(e.clientY-o[1])}ptr.set(e.pointerId,[e.clientX,e.clientY]);if(ptr.size==2){const[a,b]=[...ptr.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);rad=Math.min(22,Math.max(4,rad*pd/d));pd=d}setCam()});
+view.addEventListener('pointerup',e=>{if(ptr.size==1&&moved<6)clickAt(e);ptr.delete(e.pointerId)});
+view.addEventListener('pointercancel',e=>ptr.delete(e.pointerId));
+view.addEventListener('wheel',e=>{e.preventDefault();rad=Math.min(22,Math.max(4,rad*(1+e.deltaY*.001)));setCam()},{passive:false});
+const ray=new THREE.Raycaster(),mv=new THREE.Vector2();
+function clickAt(e){const r=ren.domElement.getBoundingClientRect();mv.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mv,cam);const h=ray.intersectObjects(pick.filter(m=>m.visible),false)[0];if(h)sel(h.object.userData.id)}
+/* component UI */
+Object.keys(comps).forEach(id=>{const b=document.createElement('button');b.textContent=comps[id].name.split(' (')[0];b.dataset.id=id;b.onclick=()=>sel(id);$('#chips').appendChild(b)});
+let cur=null;
+function sel(id){cur=id;$$('#chips button').forEach(b=>b.classList.toggle('on',b.dataset.id==id));$('#info').innerHTML='<b>'+comps[id].name+'</b><br>'+comps[id].desc;Object.keys(comps).forEach(k=>comps[k].mats.forEach(m=>{if(m.emissive&&!m.userData.noEm)m.emissive.set(k==id?0x3a2a99:0x000000)}))}
+/* simulation */
+const S=[
+{t:'Siapkan instrumen',d:'Instrumen mati. Periksa liquid trap berisi air, selang gas, dan hood menyala.',lamp:0,fl:0,asp:0,frac:0,dens:0,liq:0xbfd9e8},
+{t:'Nyalakan HCL Ca (422,7 nm)',d:'Lampu Ca menyala dan dipanaskan. Berkas 422,7 nm melewati jalur optik menuju monokromator.',lamp:1,fl:0,asp:0,frac:0,dens:0,liq:0xbfd9e8,cmp:'lamp'},
+{t:'Buka gas & nyalakan nyala',d:'Udara dan asetilen dialirkan, nyala udara–asetilen dinyalakan. Atur tinggi burner dan auto-zero.',lamp:1,fl:1,asp:0,frac:0,dens:0,liq:0xbfd9e8,cmp:'flame'},
+{t:'Aspirasi blanko',d:'Blanko (HNO₃/HCl encer) diaspirasi; hampir tanpa atom Ca. Absorbansi ≈ 0.',lamp:1,fl:1,asp:1,frac:0,dens:.2,liq:0xe6eef2,cmp:'nebu'},
+{t:'Standar Ca 3 mg/L',d:'Ca²⁺ diaspirasi, atomisasi sempurna: atom Ca⁰ (ungu) menyerap berkas lampu. Absorbansi ≈ 0,30.',lamp:1,fl:1,asp:1,frac:1,dens:1,liq:0xbfd9e8,cmp:'sample'},
+{t:'Ca + PO₄³⁻ (gangguan)',d:'Fosfat membentuk Ca₃(PO₄)₂ (abu-abu) yang sukar diatomisasi: atom Ca bebas berkurang, absorbansi turun.',lamp:1,fl:1,asp:1,frac:.45,dens:1,liq:0xf1e6a8,cmp:'flame'},
+{t:'Ca + PO₄³⁻ + La³⁺',d:'La³⁺ mengikat fosfat sebagai LaPO₄, Ca terbebas dan teratomisasi: absorbansi pulih (recovery ≈ 97 %).',lamp:1,fl:1,asp:1,frac:.97,dens:1,liq:0xd7ecd1,cmp:'flame'},
+{t:'Ca + PO₄³⁻ + EDTA',d:'EDTA membentuk kompleks Ca–EDTA yang terurai di nyala sehingga Ca terlindung dari fosfat (recovery ≈ 90 %).',lamp:1,fl:1,asp:1,frac:.9,dens:1,liq:0xe3d5f0,cmp:'flame'}];
+let si=0,A=0,tA=0,timer=null;
+S.forEach((s,i)=>{const b=document.createElement('button');b.textContent=(i+1)+'. '+s.t;b.onclick=()=>go(i);$('#steps').appendChild(b)});
+function go(i){si=(i+S.length)%S.length;const s=S[si];$$('#steps button').forEach((b,j)=>b.classList.toggle('on',j==si));$('#sdesc').textContent=s.d;flame.visible=!!s.fl;lampLight.intensity=s.lamp?1.2:0;lampGlass.material.emissive.set(s.lamp?0x6b3fe0:0);lampGlass.material.userData.noEm=true;liq.material.color.set(s.liq);liq.visible=true;tA=s.asp?(s.frac*.30):0;if(s.cmp)sel(s.cmp);P.forEach(p=>p.atom=Math.random()<s.frac)}
+$('#next').onclick=()=>go(si+1);$('#prev').onclick=()=>go(si-1);
+$('#play').onclick=function(){if(timer){clearInterval(timer);timer=null;this.textContent='▶ Putar otomatis'}else{this.textContent='❚❚ Jeda';timer=setInterval(()=>go(si+1),6500)}};
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;const s=S[si],T=now/1000;
+A+=(tA-A)*Math.min(1,dt*2.5);const Tr=Math.pow(10,-A);
+flame.scale.y=1+.08*Math.sin(T*18)+.05*Math.sin(T*31);flame.material.opacity=.55+.12*Math.sin(T*23);
+const o=s.lamp?.8:0;b1.material.opacity=o;b2.material.opacity=o*(1+Tr)/2;b3.material.opacity=o*Tr;
+const n=Math.floor(N*(s.asp?s.dens:0));
+for(const p of P){if(p.i>=n){const k=p.i*3;pp[k]=pp[k+1]=pp[k+2]=-50;continue}
+p.t+=dt*.28;if(p.t>1){p.t=0;p.atom=Math.random()<s.frac;p.j=Math.random()*6.28}
+const k=p.i*3,t=p.t;let x,y,z,c;
+if(t<.62){const u=t/.62;y=.6+u*1.3;z=.45*(1-u);x=Math.sin(p.j+T*3)*.08;c=col(0x7fc4ff)}
+else{const u=(t-.62)/.38;y=1.95+u*.85;z=Math.sin(p.j*2+T*5)*.12;x=Math.sin(p.j)*.65*Math.min(1,u*2+.3);c=p.atom?col(0xb982ff):col(0x8a8f92)}
+pp[k]=x;pp[k+1]=y;pp[k+2]=z;pc[k]=c.r;pc[k+1]=c.g;pc[k+2]=c.b}
+pg.attributes.position.needsUpdate=true;pg.attributes.color.needsUpdate=true;
+$('#aV').textContent=fx(A,3);$('#tV').textContent=fx(Tr*100,1);$('#aB').style.width=Math.min(100,A/.5*100)+'%';
+ren.render(scene,cam)}
+go(0);resize();requestAnimationFrame(loop);
+
+/* ---------- Perhitungan ---------- */
+const avg=a=>a.reduce((s,v)=>s+v,0)/a.length,sd=a=>{const m=avg(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1))};
+let cal=[[0,.002],[1,.052],[2,.101],[3,.149],[4,.203],[5,.250]];
+function lin(){const x=cal.map(r=>r[0]),y=cal.map(r=>r[1]),n=x.length,mx=avg(x),my=avg(y);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx)*(y[i]-my);sxx+=(x[i]-mx)**2;syy+=(y[i]-my)**2}const m=sxy/sxx,b=my-m*mx,r=sxy/Math.sqrt(sxx*syy),sse=y.reduce((s,v,i)=>s+(v-(m*x[i]+b))**2,0);return{m,b,r,sy:Math.sqrt(sse/(n-2)),x,y}}
+function buildCal(){const tb=$('#cal tbody');tb.innerHTML='';cal.forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td><input type="number" step="any" value="'+r[0]+'"></td><td><input type="number" step="any" value="'+r[1]+'"></td>';tr.querySelectorAll('input').forEach((inp,k)=>inp.oninput=()=>{cal[i][k]=parseFloat(inp.value);calc()});tb.appendChild(tr)})}
+$('#addR').onclick=()=>{cal.push([cal.length?cal[cal.length-1][0]+1:0,0]);buildCal();calc()};
+$('#delR').onclick=()=>{if(cal.length>3){cal.pop();buildCal();calc()}};
+let rows=[['Ca saja',.148,.150,.147],['Ca + SO₄²⁻ 500 mg/L',.120,.118,.121],['Ca + PO₄³⁻ 200 mg/L',.075,.078,.074],['Ca + PO₄³⁻ + La 1 %',.146,.149,.147],['Ca + PO₄³⁻ + EDTA 0,01 M',.139,.141,.140]];
+function buildInt(){const tb=$('#int tbody');tb.innerHTML='';rows.forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td><input class="w" style="min-width:150px" value="'+r[0]+'"></td>'+[1,2,3].map(k=>'<td><input type="number" step="any" value="'+r[k]+'" style="width:64px"></td>').join('')+'<td></td><td></td><td></td><td></td><td></td>';tr.querySelectorAll('input').forEach((inp,k)=>inp.oninput=()=>{rows[i][k]=k?parseFloat(inp.value):inp.value;calc()});tb.appendChild(tr)})}
+function calc(){const L=lin();$('#calRes').innerHTML='<tr><td>Persamaan</td><td>y = '+fx(L.m,4)+'x '+(L.b<0?'– ':'+ ')+fx(Math.abs(L.b),4)+'</td></tr><tr><td>Slope (m)</td><td>'+fx(L.m,5)+'</td></tr><tr><td>Intercept (b)</td><td>'+fx(L.b,5)+'</td></tr><tr><td>r / R²</td><td>'+fx(L.r,5)+' / '+fx(L.r*L.r,5)+'</td></tr><tr><td>LOD / LOQ (mg/L)</td><td>'+fx(3*L.sy/L.m,3)+' / '+fx(10*L.sy/L.m,3)+'</td></tr>';
+const nom=parseFloat($('#nom').value),ref=avg(rows[0].slice(1));
+$$('#int tbody tr').forEach((tr,i)=>{const a=rows[i].slice(1),c=a.map(v=>(v-L.b)/L.m),mc=avg(c),rsd=sd(c)/mc*100,rec=mc/nom*100,d=(1-avg(a)/ref)*100,pass=rec>=85&&rec<=115&&rsd<5,td=tr.querySelectorAll('td');
+td[4].textContent=fx(mc,3);td[5].textContent=fx(rec,1);td[6].textContent=fx(rsd,2);td[7].textContent=i?fx(d,1)+' %':'–';td[8].innerHTML=pass?'<span class="ok">Diterima</span>':'<span class="bad">Ditolak</span>'});
+drawChart()}
+function drawChart(){const c=$('#ch'),w=c.clientWidth;if(!w)return;const dpr=devicePixelRatio||1;c.width=w*dpr;c.height=240*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);const L=lin(),st=getComputedStyle(document.body),ink=st.color,H=240,pad=38;
+const mxX=Math.max(...L.x)*1.05||1,mxY=Math.max(...L.y,L.m*mxX+L.b)*1.1||1,X=v=>pad+v/mxX*(w-pad-10),Y=v=>H-pad+8-v/mxY*(H-pad-14);
+g.clearRect(0,0,w,H);g.strokeStyle=ink;g.fillStyle=ink;g.globalAlpha=.5;g.beginPath();g.moveTo(pad,8);g.lineTo(pad,H-pad+8);g.lineTo(w-10,H-pad+8);g.stroke();g.globalAlpha=1;g.font='12px sans-serif';g.fillText('C (mg/L)',w/2-20,H-6);g.save();g.translate(11,H/2+14);g.rotate(-Math.PI/2);g.fillText('Absorbansi',0,0);g.restore();
+for(let i=0;i<=5;i++){g.fillText((mxX*i/5).toFixed(1),X(mxX*i/5)-8,H-pad+22);g.fillText((mxY*i/5).toFixed(2),2,Y(mxY*i/5)+4)}
+g.strokeStyle='#e8751a';g.lineWidth=2;g.beginPath();g.moveTo(X(0),Y(L.b));g.lineTo(X(mxX),Y(L.m*mxX+L.b));g.stroke();g.fillStyle='#7a4dff';L.x.forEach((v,i)=>{g.beginPath();g.arc(X(v),Y(L.y[i]),4,0,7);g.fill()});g.fillStyle=ink;g.fillText('y = '+fx(L.m,4)+'x + '+fx(L.b,4)+'   R² = '+fx(L.r*L.r,4),pad+12,22)}
+$('#nom').oninput=calc;addEventListener('resize',drawChart);
+/* reagen */
+const RG=[['CaCO₃ → Ca (mg/L)',100.087/40.078,'mg/L Ca',1000],['Na₂SO₄ → SO₄²⁻ (mg/L)',142.04/96.06,'mg/L SO₄',500],['KH₂PO₄ → PO₄³⁻ (mg/L)',136.09/94.97,'mg/L PO₄',200],['La₂O₃ → La³⁺ (mg/L; 1 % = 10000)',325.81/(2*138.905),'mg/L La',10000],['Na₂EDTA·2H₂O (mol/L)',372.24,'mol/L',.01]];
+RG.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=r[0];$('#rg').appendChild(o)});
+function rg(){const r=RG[$('#rg').value],t=parseFloat($('#rt').value),v=parseFloat($('#rv').value);$('#ru').textContent=r[2];const g=r[2]=='mol/L'?t*v/1000*r[1]:t*v/1e6*r[1];$('#rres').innerHTML='Massa zat = <b>'+fx(g,4)+' g</b> ('+fx(g*1000,1)+' mg) ditepatkan menjadi '+v+' mL'}
+$('#rg').onchange=()=>{const r=RG[$('#rg').value];$('#rt').value=r[3];rg()};['rt','rv'].forEach(i=>$('#'+i).oninput=rg);rg();
+function dl(){const a=+$('#c1').value,b=+$('#c2').value,v=+$('#v2').value;$('#dres').innerHTML='V₁ = C₂·V₂ ÷ C₁ = <b>'+fx(b*v/a,3)+' mL</b> stok, tepatkan hingga '+v+' mL'}
+['c1','c2','v2'].forEach(i=>$('#'+i).oninput=dl);dl();
+$('#cT').oninput=()=>$('#cA').textContent=fx(-Math.log10($('#cT').value/100),4);$('#cT').oninput();
+buildCal();buildInt();calc();
+</script>
+</body>
+</html>
